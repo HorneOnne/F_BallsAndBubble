@@ -50,11 +50,10 @@ namespace BallsAndBubble
 
         private void OnMouseDown()
         {
-            OnBlockClicked?.Invoke(this);
-            
-
-
-
+            if(GameplayManager.Instance.CurrentState == GameplayManager.GameState.PLAYING)
+            {
+                OnBlockClicked?.Invoke(this);
+            }
         }
     }
 }

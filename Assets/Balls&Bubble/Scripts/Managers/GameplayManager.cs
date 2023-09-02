@@ -17,8 +17,6 @@ namespace BallsAndBubble
         {
             PLAYING,
             WAITING,
-            STARTNEXTROUND,
-            ROUNDFINISHED,
             WIN,
             GAMEOVER,
             PAUSE,
@@ -56,7 +54,8 @@ namespace BallsAndBubble
 
         private void Start()
         {
-            ChangeGameState(GameState.PLAYING);
+            Time.timeScale = 1.0f;
+            GameManager.Instance.ResetScore();
         }
         #endregion
 
@@ -78,25 +77,16 @@ namespace BallsAndBubble
             switch (_currentState)
             {
                 default: break;
+                case GameState.WAITING:
+                    
+
+                    break;
                 case GameState.PLAYING:
+                    Time.timeScale = 1.0f;
 
                     OnPlaying?.Invoke();
-                    break;
-                case GameState.WAITING:
-
-
-                    break;
-                case GameState.ROUNDFINISHED:
-
-                    OnRoundFinished?.Invoke();
-                    ChangeGameState(GameState.STARTNEXTROUND);
-                    break;
-                case GameState.STARTNEXTROUND:
-
-                    OnStartNextRound?.Invoke();
-                    break;
+                    break;            
                 case GameState.WIN:
-
 
                     OnWin?.Invoke();
                     break;
@@ -105,7 +95,6 @@ namespace BallsAndBubble
                     StartCoroutine(Utilities.WaitAfter(0.5f, () =>
                     {
                         SoundManager.Instance.PlaySound(SoundType.GameOver, false);
-                        UIGameplayManager.Instance.CloseAll();
                         UIGameplayManager.Instance.DisplayGameoverMenu(true);
                     }));
                     OnGameOver?.Invoke();
@@ -115,7 +104,7 @@ namespace BallsAndBubble
                     break;
                 case GameState.UNPAUSE:
                     Time.timeScale = 1.0f;
-                    _currentState = _gameStateWhenPause;
+                    _currentState = GameState.PLAYING;
                     break;
                 case GameState.EXIT:
                     Time.timeScale = 1.0f;

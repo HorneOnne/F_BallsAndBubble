@@ -36,7 +36,7 @@ TagManager:
   - 
   - 
   - 
-  - 
+  - Block
   m_SortingLayers:
   - name: BackgroundUI
     uniqueID: 2676004321

@@ -8,21 +8,21 @@ namespace BallsAndBubble
     {
         [Header("Buttons")]
         [SerializeField] private Button _pauseBtn;
+        [SerializeField] private Button _replayBtn;
 
         [Header("Texts")]
-        [SerializeField] private TextMeshProUGUI _pauseBtnText;
         [SerializeField] private TextMeshProUGUI _scoreText;
 
 
 
         private void OnEnable()
         {
-            GameplayManager.OnStartNextRound += LoadScoreText;
+            GameManager.OnScoreUp += LoadScoreText;
         }
 
         private void OnDisable()
         {
-            GameplayManager.OnStartNextRound -= LoadScoreText;
+            GameManager.OnScoreUp -= LoadScoreText;
         }
 
 
@@ -33,13 +33,17 @@ namespace BallsAndBubble
             _pauseBtn.onClick.AddListener(() =>
             {
                 SoundManager.Instance.PlaySound(SoundType.Button, false);
-                GameplayManager.Instance.CacheGameStateWhenPause(GameplayManager.Instance.CurrentState);
                 GameplayManager.Instance.ChangeGameState(GameplayManager.GameState.PAUSE);
 
-                UIGameplayManager.Instance.CloseAll();
                 UIGameplayManager.Instance.DisplayPauseMenu(true);
             });
 
+
+            _replayBtn.onClick.AddListener(() =>
+            {
+                SoundManager.Instance.PlaySound(SoundType.Button, false);
+                Loader.Load(Loader.Scene.GameplayScene);
+            });
 
         }
 
@@ -52,7 +56,7 @@ namespace BallsAndBubble
 
         private void LoadScoreText()
         {
-            _scoreText.text = $"{0}";
+            _scoreText.text = $"{GameManager.Instance.Score}";
         }
     }
 }

@@ -53,5 +53,16 @@ namespace BallsAndBubble
                 _record = score;
             }
         }
+
+        public void ScoreUp()
+        {
+            _score++;
+            OnScoreUp?.Invoke();
+        }
+
+        public void ResetScore()
+        {
+            this._score = 0;
+        }
     }
 }

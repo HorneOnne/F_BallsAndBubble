@@ -12,4 +12,6 @@ EditorBuildSettings:
     path: Assets/Balls&Bubble/Scenes/GameplayScene.unity
     guid: 3fc8acdd13e6c734bafef6554d6fdbcd
   m_configObjects:
+    com.unity.adaptiveperformance.loader_settings: {fileID: 11400000, guid: e01d9dbd6b8727e41b2698de97f3bc10, type: 2}
+    com.unity.adaptiveperformance.samsung.android.provider_settings: {fileID: 11400000, guid: da92032e175650f40b850e0f7b6dcf9b, type: 2}
     com.unity.adaptiveperformance.simulator.provider_settings: {fileID: 11400000, guid: 186a0ce8dfff9d248ab3eebd9e6392e6, type: 2}

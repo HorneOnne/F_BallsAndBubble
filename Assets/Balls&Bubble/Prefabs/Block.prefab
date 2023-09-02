@@ -15,8 +15,8 @@ GameObject:
   - component: {fileID: -8141794074383880245}
   - component: {fileID: -867293786013666566}
   - component: {fileID: -6532378700858817469}
-  m_Layer: 0
-  m_Name: Piece
+  m_Layer: 31
+  m_Name: Block
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -158,7 +158,7 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 0.9411765, y: 0.9411765}
+  m_Size: {x: 1, y: 1}
   m_EdgeRadius: 0
 --- !u!114 &-6532378700858817469
 MonoBehaviour:

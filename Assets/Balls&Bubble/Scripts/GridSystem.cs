@@ -52,6 +52,8 @@ namespace BallsAndBubble
 
         private void Start()
         {
+            IsSurvival = GameManager.Instance.PlayType == GameManager.GamePlayType.SURVIVAL ? true : false;
+
             blockPrefabDict = new Dictionary<BlockType, GameObject>();
 
             for (int i = 0; i < BlocksPrefabs.Length; i++)
@@ -74,7 +76,10 @@ namespace BallsAndBubble
                 }
             }
 
-            StartCoroutine(PerformFillHorizontal(fillTime));
+            StartCoroutine(PerformFillHorizontal(fillTime, ()=>
+            {
+                GameplayManager.Instance.ChangeGameState(GameplayManager.GameState.PLAYING);
+            }));
         }
 
 
@@ -85,8 +90,12 @@ namespace BallsAndBubble
             {
                 for (int i = 0; i < listNB.Count; i++)
                 {
-                    ClearPiece(listNB[i].X, listNB[i].Y);
+                    ClearPiece(listNB[i].X, listNB[i].Y);                 
                 }
+            }
+            else
+            {
+                SoundManager.Instance.PlaySound(SoundType.Button, false);
             }
 
             StartCoroutine(PerformMoveBlockDown(()=>
@@ -107,10 +116,14 @@ namespace BallsAndBubble
 
            
 
-            StartCoroutine(Utilities.WaitAfter(0.5f, () =>
+            StartCoroutine(Utilities.WaitAfter(0.25f, () =>
             {
                 bool isGameOver = NoConnectedGroupsGreaterThanOne();
-                Debug.Log($"Gameover: {isGameOver}");
+                if(isGameOver)
+                {
+                    GameplayManager.Instance.ChangeGameState(GameplayManager.GameState.GAMEOVER);
+                }
+               
             }));
         }
 
@@ -312,13 +325,16 @@ namespace BallsAndBubble
        
 
         
-        private IEnumerator PerformFillHorizontal(float fillTime)
+        private IEnumerator PerformFillHorizontal(float fillTime, System.Action OnFinished)
         {
             while (true)
             {
                 if (FillHorizontal() == false)
+                {
+                    OnFinished?.Invoke();
                     yield break;
-
+                }
+                  
                 yield return waitForSeconds;
             }
         }
@@ -446,7 +462,8 @@ namespace BallsAndBubble
                 blocks[x, y].ClearableBlock.Clear();
                 SpawnNewBlock(x, y, BlockType.EMPTY);
 
-                //MoveBlocksDown();
+                SoundManager.Instance.PlaySound(SoundType.HitBlock, false);
+                GameManager.Instance.ScoreUp();
                 return true;
             }
 
