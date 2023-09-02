@@ -17,7 +17,6 @@ namespace BallsAndBubble
         {
             IsBeingCleared = true;         
             Destroy(this.gameObject);
-            Debug.Log("clear");
         }
     }
 }

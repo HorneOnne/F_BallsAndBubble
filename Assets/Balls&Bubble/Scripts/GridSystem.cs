@@ -1,8 +1,5 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using System.Linq.Expressions;
-using System.Net.NetworkInformation;
-using Unity.VisualScripting;
 using UnityEngine;
 
 namespace BallsAndBubble
@@ -26,18 +23,31 @@ namespace BallsAndBubble
 
         public int width;
         public int height;
+        public bool IsSurvival { get; set; }
 
         public BlockPrefab[] BlocksPrefabs;
-        public GameObject BackgroundPrefab;
 
         private Dictionary<BlockType, GameObject> blockPrefabDict;
         private Block[,] blocks;
 
         private float fillTime = 0.02f;
+        private WaitForSeconds waitForSeconds;
+
 
         private void Awake()
         {
             Instance = this;
+            waitForSeconds = new WaitForSeconds(fillTime);
+        }
+
+        private void OnEnable()
+        {
+            Block.OnBlockClicked += BlockClickedLogicHandle;
+        }
+
+        private void OnDisable()
+        {
+            Block.OnBlockClicked -= BlockClickedLogicHandle;
         }
 
         private void Start()
@@ -53,15 +63,6 @@ namespace BallsAndBubble
             }
 
 
-            for (int y = 0; y < height; y++)
-            {
-                for (int x = 0; x < width; x++)
-                {
-                    GameObject background = Instantiate(BackgroundPrefab, GetWorldPosition(x, y), Quaternion.identity);
-                    background.transform.parent = this.transform;
-                }
-            }
-
 
             blocks = new Block[width, height];
 
@@ -73,54 +74,59 @@ namespace BallsAndBubble
                 }
             }
 
-
-            //Fill();
-            //StartCoroutine(PerformFill(0.02f))
-            //FillHorizontal();
-            //FillVertical();
-            //FillStep();
+            StartCoroutine(PerformFillHorizontal(fillTime));
         }
 
-        private void Update()
+
+        private void BlockClickedLogicHandle(Block block)
         {
-            if (Input.GetKeyDown(KeyCode.S))
+            var listNB = GridSystem.Instance.FindConnectedGroup(block.X, block.Y, block.ColorBlock.Color);
+            if (listNB.Count > 1)
             {
-                //FillHorizontal();
-                StartCoroutine(PerformFill(fillTime));
-            }
-            if (Input.GetKeyDown(KeyCode.D))
-            {
-                MoveBlocksDown();
-            }
-
-            if (Input.GetKeyDown(KeyCode.C))
-            {
-                FilColumn(2);
+                for (int i = 0; i < listNB.Count; i++)
+                {
+                    ClearPiece(listNB[i].X, listNB[i].Y);
+                }
             }
 
-            if (Input.GetKeyDown(KeyCode.L))
+            StartCoroutine(PerformMoveBlockDown(()=>
             {
-                MoveColumnLeft(2);
-            }
-            if (Input.GetKeyDown(KeyCode.R))
-            {
-                MoveColumnRight(1);
-            }
+                MoveAllEmptyColumnRight();
 
-            if (Input.GetKeyDown(KeyCode.E))
-            {
-                bool isEmpty = IsColumnEmpty(2);
-                Debug.Log(isEmpty);
-            }
+                if (IsSurvival)
+                {
+                    for (int i = 0; i < width - 1; i++)
+                    {
+                        if (IsColumnEmpty(i))
+                        {
+                            StartCoroutine(PerformFillColume(i));
+                        }
+                    }
+                }
+            }));
 
-            if (Input.GetKeyDown(KeyCode.W))
+           
+
+            StartCoroutine(Utilities.WaitAfter(0.5f, () =>
             {
                 bool isGameOver = NoConnectedGroupsGreaterThanOne();
                 Debug.Log($"Gameover: {isGameOver}");
-            }
+            }));
         }
 
-        #region MyCode
+        private void MoveAllEmptyColumnRight()
+        {
+            for (int i = width - 1; i >= 0; i--)
+            {
+                if (IsColumnEmpty(i))
+                {
+                    for (int x = i; x >= 0; x--)
+                    {
+                        MoveColumnRight(x);
+                    }
+                }
+            }
+        }
 
         public bool NoConnectedGroupsGreaterThanOne()
         {
@@ -182,100 +188,6 @@ namespace BallsAndBubble
             return false;
         }
 
-        public bool MoveColumnLeft(int column)
-        {
-            bool movedPiece = false;
-
-            // Check if the specified column is valid
-            if (column >= 0 && column < width)
-            {
-                // Iterate through the column from top to bottom
-                for (int y = height - 1; y >= 1; y--)
-                {
-                    Block currentBlock = blocks[column, y];
-
-                    if (currentBlock.IsMoveable())
-                    {
-                        Block nbLeft = blocks[column - 1, y];  // Check the block to the left
-
-                        if (nbLeft.Type == BlockType.EMPTY)
-                        {
-                            Destroy(nbLeft.gameObject);
-
-                            currentBlock.MoveableBlock.Move(column - 1, y, fillTime);
-                            blocks[column - 1, y] = currentBlock;
-                            blocks[column, y] = SpawnNewBlock(column, y, BlockType.EMPTY); // Empty the current position
-                            movedPiece = true;
-                        }
-                    }
-                }
-            }
-
-            return movedPiece;
-        }
-        public bool MoveColumnRight(int column)
-        {
-            bool movedPiece = false;
-
-            // Check if the specified column is valid
-            if (column >= 0 && column < width - 1)
-            {
-                // Iterate through the column from top to bottom
-                for (int y = height - 1; y >= 1; y--)
-                {
-                    Block currentBlock = blocks[column, y];
-
-                    if (currentBlock.IsMoveable())
-                    {
-                        Block nbRight = blocks[column + 1, y];  // Check the block to the right
-
-                        if (nbRight.Type == BlockType.EMPTY)
-                        {
-                            Destroy(nbRight.gameObject);
-
-                            currentBlock.MoveableBlock.Move(column + 1, y, fillTime);
-                            blocks[column + 1, y] = currentBlock;
-                            blocks[column, y] = SpawnNewBlock(column, y, BlockType.EMPTY); // Empty the current position
-                            movedPiece = true;
-                        }
-                    }
-                }
-            }
-
-            return movedPiece;
-        }
-
-        public bool MoveBlocksDown()
-        {
-            bool movedPiece = false;
-
-            // Iterate through the grid from top to bottom and left to right
-            for (int y = 1; y < height; y++)
-            {
-                for (int x = 0; x < width; x++)
-                {
-                    Block piece = blocks[x, y];
-
-                    if (piece.IsMoveable())
-                    {
-                        Block nbAbove = blocks[x, y - 1];  // Check the block above
-
-                        if (nbAbove.Type == BlockType.EMPTY)
-                        {
-                            Destroy(nbAbove.gameObject);
-
-                            piece.MoveableBlock.Move(x, y - 1, fillTime);
-                            blocks[x, y - 1] = piece;
-                            blocks[x, y] = SpawnNewBlock(x, y, BlockType.EMPTY); // Empty the current position
-                            movedPiece = true;
-                        }
-                    }
-                }
-            }
-
-            return movedPiece;
-        }
-
         public bool FilColumn(int column)
         {
             bool movedPiece = false;
@@ -322,7 +234,94 @@ namespace BallsAndBubble
             }
             return movedPiece;
         }
+        private IEnumerator PerformFillColume(int column)
+        {
+            while (true)
+            {
+                if (FilColumn(column) == false)
+                    yield break;
 
+                yield return waitForSeconds;
+            }
+        }
+
+
+        public bool MoveColumnLeft(int column)
+        {
+            bool movedPiece = false;
+
+            // Check if the specified column is valid
+            if (column >= 1 && column < width)
+            {
+                // Iterate through the column from top to bottom
+                for (int y = height - 1; y >= 0; y--)
+                {
+                    Block currentBlock = blocks[column, y];
+
+                    if (currentBlock.IsMoveable())
+                    {
+                        Block nbLeft = blocks[column - 1, y];  // Check the block to the left
+
+                        if (nbLeft.Type == BlockType.EMPTY)
+                        {
+                            Destroy(nbLeft.gameObject);
+
+                            currentBlock.MoveableBlock.Move(column - 1, y, fillTime);
+                            blocks[column - 1, y] = currentBlock;
+                            blocks[column, y] = SpawnNewBlock(column, y, BlockType.EMPTY); // Empty the current position
+                            movedPiece = true;
+                        }
+                    }
+                }
+            }
+
+            return movedPiece;
+        }
+        public bool MoveColumnRight(int column)
+        {
+            bool movedPiece = false;
+
+            // Check if the specified column is valid
+            if (column >= 0 && column < width - 1)
+            {
+                // Iterate through the column from top to bottom
+                for (int y = height - 1; y >= 0; y--)
+                {
+                    Block currentBlock = blocks[column, y];
+
+                    if (currentBlock.IsMoveable())
+                    {
+                        Block nbRight = blocks[column + 1, y];  // Check the block to the right
+
+                        if (nbRight.Type == BlockType.EMPTY)
+                        {
+                            Destroy(nbRight.gameObject);
+
+                            currentBlock.MoveableBlock.Move(column + 1, y, fillTime);
+                            blocks[column + 1, y] = currentBlock;
+                            blocks[column, y] = SpawnNewBlock(column, y, BlockType.EMPTY); // Empty the current position
+                            movedPiece = true;
+                        }
+                    }
+                }
+            }
+
+            return movedPiece;
+        }
+
+       
+
+        
+        private IEnumerator PerformFillHorizontal(float fillTime)
+        {
+            while (true)
+            {
+                if (FillHorizontal() == false)
+                    yield break;
+
+                yield return waitForSeconds;
+            }
+        }
         public bool FillHorizontal()
         {
             bool movedPiece = false;
@@ -376,17 +375,51 @@ namespace BallsAndBubble
         }
 
 
-        public IEnumerator PerformMoveBlockDown()
+        public bool MoveBlocksDown()
+        {
+            bool movedPiece = false;
+
+            // Iterate through the grid from top to bottom and left to right
+            for (int y = 1; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    Block piece = blocks[x, y];
+
+                    if (piece.IsMoveable())
+                    {
+                        Block nbAbove = blocks[x, y - 1];  // Check the block above
+
+                        if (nbAbove.Type == BlockType.EMPTY)
+                        {
+                            Destroy(nbAbove.gameObject);
+
+                            piece.MoveableBlock.Move(x, y - 1, fillTime);
+                            blocks[x, y - 1] = piece;
+                            blocks[x, y] = SpawnNewBlock(x, y, BlockType.EMPTY); // Empty the current position
+                            movedPiece = true;
+                        }
+                    }
+                }
+            }
+
+            return movedPiece;
+        }
+        public IEnumerator PerformMoveBlockDown(System.Action OnFinished)
         {
             while (true)
             {
                 if (MoveBlocksDown() == false)
+                {
+                    OnFinished?.Invoke();
                     yield break;
-
-                yield return new WaitForSeconds(fillTime);
+                }                 
+                yield return waitForSeconds;
             }
+
+            
         }
-        #endregion
+
 
         public Vector2 GetWorldPosition(int x, int y)
         {
@@ -404,80 +437,7 @@ namespace BallsAndBubble
 
             return blocks[x, y];
         }
-
-
-        public void Fill()
-        {
-            while (true)
-            {
-                if (FillHorizontal() == false)
-                    break;
-            }
-        }
-
-        public IEnumerator PerformFill(float time)
-        {
-            while (true)
-            {
-                if (FillHorizontal() == false)
-                    yield break;
-
-                yield return new WaitForSeconds(fillTime);
-            }
-        }
-
-
-        public bool FillStep()
-        {
-            bool movedPiece = false;
-
-            for (int y = height - 2; y >= 0; y--)
-            {
-                for (int x = 0; x < width; x++)
-                {
-                    Block piece = blocks[x, y];
-
-                    if (piece.IsMoveable())
-                    {
-                        Block nbBelow = blocks[x, y + 1];
-                        if (nbBelow.Type == BlockType.EMPTY)
-                        {
-                            Destroy(nbBelow.gameObject);
-
-                            piece.MoveableBlock.Move(x, y + 1, fillTime);
-                            blocks[x, y + 1] = piece;
-                            SpawnNewBlock(x, y, BlockType.EMPTY);
-                            movedPiece = true;
-                        }
-                    }
-                }
-            }
-
-            for (int x = 0; x < width; x++)
-            {
-                Block nbBelow = blocks[x, 0];
-
-                if (nbBelow.Type == BlockType.EMPTY)
-                {
-                    Destroy(nbBelow.gameObject);
-
-                    Block newPiece = Instantiate(blockPrefabDict[BlockType.NORMAL], GetWorldPosition(x, -1), Quaternion.identity).GetComponent<Block>();
-                    newPiece.transform.parent = this.transform;
-
-                    blocks[x, 0] = newPiece;
-                    blocks[x, 0].Init(x, -1, BlockType.NORMAL);
-                    blocks[x, 0].MoveableBlock.Move(x, 0, fillTime);
-                    blocks[x, 0].ColorBlock.SetColor(Utilities.GetRandomEnum<ColorBlock.ColorType>());
-
-                    movedPiece = true;
-                }
-            }
-
-            return movedPiece;
-        }
-
-
-       
+ 
 
         public bool ClearPiece(int x, int y)
         {
@@ -486,7 +446,7 @@ namespace BallsAndBubble
                 blocks[x, y].ClearableBlock.Clear();
                 SpawnNewBlock(x, y, BlockType.EMPTY);
 
-                MoveBlocksDown();
+                //MoveBlocksDown();
                 return true;
             }
 

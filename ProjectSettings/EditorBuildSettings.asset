@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Balls&Bubble/Scenes/MenuScene.unity
+    guid: ee2925a76db47c9458879c8102ad2def
+  - enabled: 1
     path: Assets/Balls&Bubble/Scenes/GameplayScene.unity
     guid: 3fc8acdd13e6c734bafef6554d6fdbcd
   m_configObjects:

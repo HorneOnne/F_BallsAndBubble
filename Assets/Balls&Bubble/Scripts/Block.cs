@@ -4,6 +4,8 @@ namespace BallsAndBubble
 {
     public class Block : MonoBehaviour
     {
+        public static event System.Action<Block> OnBlockClicked;
+
         private int x;
         private int y;
         private GridSystem.BlockType type;
@@ -48,15 +50,11 @@ namespace BallsAndBubble
 
         private void OnMouseDown()
         {
-            var listNB = GridSystem.Instance.FindConnectedGroup(x,y,ColorBlock.Color);
-            Debug.Log(listNB.Count);
-            for(int i = 0; i < listNB.Count; i++)
-            {
-                GridSystem.Instance.ClearPiece(listNB[i].x, listNB[i].y);
-            }
+            OnBlockClicked?.Invoke(this);
+            
 
-            
-            
+
+
         }
     }
 }
