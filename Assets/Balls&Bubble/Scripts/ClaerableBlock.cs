@@ -2,20 +2,20 @@
 
 namespace BallsAndBubble
 {
-    public class ClearablePiece : MonoBehaviour
+    public class ClaerableBlock : MonoBehaviour
     {
-        protected GamePiece piece;
+        protected Block piece;
 
 
         public bool IsBeingCleared { get; set; } = false;
         private void Awake()
         {
-            piece = GetComponent<GamePiece>();
+            piece = GetComponent<Block>();
         }
 
         public void Clear()
         {
-            IsBeingCleared = true;
+            IsBeingCleared = true;         
             Destroy(this.gameObject);
             Debug.Log("clear");
         }

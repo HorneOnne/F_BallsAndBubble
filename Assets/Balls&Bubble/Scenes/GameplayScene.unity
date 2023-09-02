@@ -572,9 +572,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 59c4cc5e09919ad45a6c5b26dea651fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  xDim: 8
-  yDim: 16
-  PiecePrefabs:
+  width: 8
+  height: 16
+  BlocksPrefabs:
   - Type: 0
     Prefab: {fileID: 302109856303151715, guid: faed87f88e3600b4d8f7431264226588, type: 3}
   - Type: 1

@@ -3,14 +3,14 @@ using UnityEngine;
 
 namespace BallsAndBubble
 {
-    public class MoveablePiece : MonoBehaviour
+    public class MoveableBlock : MonoBehaviour
     {
-        private GamePiece piece;
+        private Block piece;
         private IEnumerator moveCoroutine;
 
         private void Awake()
         {
-            piece = GetComponent<GamePiece>();
+            piece = GetComponent<Block>();
         }
 
         //public void Move(int newX, int newY)

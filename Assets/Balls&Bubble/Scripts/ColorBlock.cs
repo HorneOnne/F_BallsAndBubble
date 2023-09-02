@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace BallsAndBubble
 {
-    public class ColorPiece : MonoBehaviour
+    public class ColorBlock : MonoBehaviour
     {
         [System.Serializable]
         public enum ColorType
